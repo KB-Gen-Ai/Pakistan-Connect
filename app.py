@@ -116,3 +116,26 @@ if search_query:
     else:
         st.info("No matches found.")
 
+st.markdown("---")
+st.subheader("🔒 Admin Panel")
+
+admin_password = st.text_input("Enter admin password", type="password")
+
+if admin_password == st.secrets["ADMIN_PASSWORD"]:
+    st.success("✅ Access granted")
+    
+    if st.button("📥 Download All Data as CSV"):
+        from database import get_all_users
+        import pandas as pd
+
+        users = get_all_users()
+        df = pd.DataFrame(users, columns=[
+            "ID", "Name", "Email", "Phone", "City", "Country",
+            "Job Title", "Industry", "Experience", "Expertise",
+            "Help Areas", "LinkedIn"
+        ])
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button("Download CSV", csv, file_name="pakistan_connect_members.csv", mime="text/csv")
+else:
+    if admin_password:
+        st.error("❌ Incorrect password")
