@@ -93,3 +93,26 @@ if st.button("💾 Submit"):
 
         with open(qr_path, "rb") as f:
             st.download_button("🔗 Download QR Code", f, file_name="contact_qr.png")
+
+st.markdown("---")
+st.header("🔍 Pakistan Connect Directory")
+
+search_query = st.text_input("Search by name, city, job title, expertise, or help area")
+
+from database import search_users
+
+if search_query:
+    results = search_users(search_query)
+    if results:
+        for r in results:
+            st.markdown(f"### 👤 {r[1]}")
+            st.markdown(f"- 📍 **City:** {r[4]}, {r[5]}")
+            st.markdown(f"- 💼 **Title:** {r[6]}, **Industry:** {r[7]}")
+            st.markdown(f"- 📚 **Expertise:** {r[9]}")
+            st.markdown(f"- 🤝 **Can Help With:** {r[10]}")
+            profile_url = f"?email={r[2]}&phone={r[3]}"
+            st.markdown(f"[🔗 View Profile]({profile_url})")
+            st.markdown("---")
+    else:
+        st.info("No matches found.")
+
