@@ -1,105 +1,79 @@
 import streamlit as st
-from database import init_db, add_user, get_user, update_user
-from profile_generator import generate_pdf, generate_qr_code
-
-# Initialize DB
-init_db()
-from urllib.parse import unquote
-
-query_params = st.experimental_get_query_params()
-if "email" in query_params and "phone" in query_params:
-    # PUBLIC VIEW MODE
-    email_param = unquote(query_params["email"][0])
-    phone_param = unquote(query_params["phone"][0])
-    profile = get_user(email_param, phone_param)
-
-    if profile:
-        st.title("👤 Public Member Profile")
-        st.markdown(f"**Name:** {profile[1]}")
-        st.markdown(f"**City:** {profile[4]}, **Country:** {profile[5]}")
-        st.markdown(f"**Job Title:** {profile[6]}, **Industry:** {profile[7]}")
-        st.markdown(f"**Experience:** {profile[8]} years")
-        st.markdown(f"**Expertise:** {profile[9]}")
-        st.markdown(f"**Can Help With:** {profile[10]}")
-        st.markdown(f"**LinkedIn:** {profile[11]}" if profile[11] else "")
-
-        qr_path = generate_qr_code(profile[2], profile[3], profile[11])
-        st.image(qr_path, caption="Scan to Contact")
-
-        pdf_path = generate_pdf(profile)
-        with open(pdf_path, "rb") as f:
-            st.download_button("📄 Download Profile PDF", f, file_name="profile.pdf")
-
-        st.stop()
-    else:
-        st.warning("❌ Profile not found.")
-        st.stop()
+from database import init_db, save_user, search_users, get_user_by_keys, get_all_users
+from pdf_generator import generate_pdf
+from qr_generator import generate_qr_code
+import tempfile
 
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
-st.title("🇵🇰 Pakistan Connect — Member Profile Form")
-st.markdown("Please fill your details to join the national collaboration hub.")
+st.title("🇵🇰 Pakistan Connect")
+st.markdown("Helping Pakistanis globally connect, collaborate, and grow 🌍")
 
-# Step 1: Identification
-st.subheader("🔑 Identification")
-email = st.text_input("Email", key="email")
-phone = st.text_input("Phone", key="phone")
+init_db()
 
-if email and phone:
-    existing_user = get_user(email, phone)
-else:
-    existing_user = None
+# --- Profile Creation / Editing ---
+st.header("👤 Create or Update Your Profile")
 
-# Step 2: Profile Info
-st.subheader("👤 Personal & Professional Info")
+with st.form("profile_form"):
+    name = st.text_input("Full Name", max_chars=50)
+    email = st.text_input("Email")
+    phone = st.text_input("Phone (without +)")
+    city = st.text_input("City")
+    country = st.text_input("Country")
+    job_title = st.text_input("Job Title")
+    industry = st.text_input("Industry")
+    experience = st.slider("Years of Experience", 0, 50, 5)
+    expertise = st.text_area("Your Areas of Expertise (comma-separated)")
+    help_areas = st.text_area("How Can You Help Other Members?")
+    linkedin = st.text_input("LinkedIn Profile (optional)")
 
-name = st.text_input("Full Name", value=existing_user[1] if existing_user else "")
-city = st.text_input("City", value=existing_user[4] if existing_user else "")
-country = st.text_input("Country", value=existing_user[5] if existing_user else "Pakistan")
-job_title = st.text_input("Job Title", value=existing_user[6] if existing_user else "")
-industry = st.text_input("Industry", value=existing_user[7] if existing_user else "")
-experience_years = st.number_input("Years of Experience", min_value=0, max_value=50, value=existing_user[8] if existing_user else 0)
-
-expertise = st.text_area("Areas of Expertise (comma separated)", value=existing_user[9] if existing_user else "")
-help_areas = st.text_area("How can you help others? (comma separated)", value=existing_user[10] if existing_user else "")
-linkedin = st.text_input("LinkedIn or Profile URL (optional)", value=existing_user[11] if existing_user else "")
-
-# Step 3: Submit
-if st.button("💾 Submit"):
-    if not name or not email or not phone:
-        st.warning("Name, email, and phone are required.")
-    else:
-        if existing_user:
-            update_user(
-                (name, city, country, job_title, industry, experience_years, expertise, help_areas, linkedin),
-                email, phone
-            )
-            st.success("✅ Profile updated successfully!")
+    submitted = st.form_submit_button("Submit / Update Profile")
+    if submitted:
+        if not name or not email or not phone:
+            st.warning("Please fill in required fields: Name, Email, Phone.")
         else:
-            success, msg = add_user((name, email, phone, city, country, job_title, industry, experience_years, expertise, help_areas, linkedin))
-            if success:
-                st.success("✅ Profile submitted successfully!")
-            else:
-                st.warning(f"⚠️ {msg}")
+            save_user(name, email, phone, city, country, job_title, industry,
+                      experience, expertise, help_areas, linkedin)
+            st.success("✅ Your profile has been saved/updated.")
 
-        # Generate PDF + QR Code
-        profile_data = (name, email, phone, city, country, job_title, industry, experience_years, expertise, help_areas, linkedin)
-        pdf_path = generate_pdf(profile_data)
-        qr_path = generate_qr_code(email, phone, linkedin)
+# --- View Own Profile with PDF & QR ---
+st.markdown("---")
+st.header("📄 View Your Profile")
 
-        st.subheader("📎 Download Your Profile")
-        with open(pdf_path, "rb") as f:
-            st.download_button("📄 Download Profile PDF", f, file_name="profile.pdf")
+email_key = st.text_input("Enter your email to view your profile")
+phone_key = st.text_input("Enter your phone")
 
-        with open(qr_path, "rb") as f:
-            st.download_button("🔗 Download QR Code", f, file_name="contact_qr.png")
+if st.button("View My Profile"):
+    record = get_user_by_keys(email_key, phone_key)
+    if record:
+        st.markdown(f"### 👤 {record[1]}")
+        st.markdown(f"- 📧 Email: {record[2]}")
+        st.markdown(f"- 📞 Phone: {record[3]}")
+        st.markdown(f"- 📍 City: {record[4]}, {record[5]}")
+        st.markdown(f"- 💼 Title: {record[6]}, Industry: {record[7]}")
+        st.markdown(f"- 📊 Experience: {record[8]} years")
+        st.markdown(f"- 📚 Expertise: {record[9]}")
+        st.markdown(f"- 🤝 Can Help: {record[10]}")
+        if record[11]:
+            st.markdown(f"- 🔗 LinkedIn: [{record[11]}]({record[11]})")
 
+        # QR Code
+        qr_img = generate_qr_code(record[2], record[3])
+        st.image(qr_img, caption="Scan to Save Contact")
+
+        # PDF Download
+        pdf_bytes = generate_pdf(record)
+        st.download_button("📄 Download Profile as PDF", pdf_bytes,
+                           file_name=f"{record[1]}_profile.pdf",
+                           mime="application/pdf")
+    else:
+        st.error("Profile not found. Please check email/phone.")
+
+# --- Member Directory Search ---
 st.markdown("---")
 st.header("🔍 Pakistan Connect Directory")
 
-search_query = st.text_input("Search by name, city, job title, expertise, or help area")
-
-from database import search_users
+search_query = st.text_input("Search by name, city, title, expertise, or help area")
 
 if search_query:
     results = search_users(search_query)
@@ -116,6 +90,7 @@ if search_query:
     else:
         st.info("No matches found.")
 
+# --- Admin CSV Export ---
 st.markdown("---")
 st.subheader("🔒 Admin Panel")
 
@@ -123,9 +98,8 @@ admin_password = st.text_input("Enter admin password", type="password")
 
 if admin_password == st.secrets["ADMIN_PASSWORD"]:
     st.success("✅ Access granted")
-    
+
     if st.button("📥 Download All Data as CSV"):
-        from database import get_all_users
         import pandas as pd
 
         users = get_all_users()
