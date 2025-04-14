@@ -1,72 +1,32 @@
-import sqlite3
+import pandas as pd
+import os
 
-DB_FILE = "pakistan_connect.db"
+DB_FILE = "data/profiles.csv"
 
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            email TEXT,
-            phone TEXT,
-            city TEXT,
-            country TEXT,
-            job_title TEXT,
-            industry TEXT,
-            experience INTEGER,
-            expertise TEXT,
-            help_areas TEXT,
-            linkedin TEXT,
-            UNIQUE(email, phone)
-        )
-    ''')
-    conn.commit()
-    conn.close()
+def save_profile(data: dict):
+    df = pd.DataFrame([data])
 
-def save_user(name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR REPLACE INTO users
-        (id, name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin)
-        VALUES (
-            (SELECT id FROM users WHERE email=? AND phone=?),
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
-    ''', (email, phone, name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin))
-    conn.commit()
-    conn.close()
+    if not os.path.exists("data"):
+        os.makedirs("data")
 
-def get_user_by_keys(email, phone):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE email=? AND phone=?', (email, phone))
-    user = cursor.fetchone()
-    conn.close()
-    return user
+    if os.path.exists(DB_FILE):
+        existing = pd.read_csv(DB_FILE, dtype=str)
+        if data["email"] in existing["email"].values or data["phone"] in existing["phone"].values:
+            return  # Duplicate found
 
-def search_users(query):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    pattern = f"%{query.lower()}%"
-    cursor.execute('''
-        SELECT * FROM users
-        WHERE LOWER(name) LIKE ?
-        OR LOWER(city) LIKE ?
-        OR LOWER(job_title) LIKE ?
-        OR LOWER(expertise) LIKE ?
-        OR LOWER(help_areas) LIKE ?
-    ''', (pattern, pattern, pattern, pattern, pattern))
-    results = cursor.fetchall()
-    conn.close()
-    return results
+        combined = pd.concat([existing, df], ignore_index=True)
+    else:
+        combined = df
 
-def get_all_users():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users')
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
+    combined.to_csv(DB_FILE, index=False)
+
+def get_profile_by_id(profile_id: str):
+    try:
+        df = pd.read_csv(DB_FILE, dtype=str)
+        profile = df[df["id"] == profile_id]
+        if not profile.empty:
+            return profile.iloc[0].to_dict()
+        return None
+    except Exception as e:
+        print(f"Error fetching profile: {e}")
+        return None
