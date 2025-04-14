@@ -78,3 +78,10 @@ def search_users(query):
     conn.close()
     return results
 
+def get_all_users():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users')
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
