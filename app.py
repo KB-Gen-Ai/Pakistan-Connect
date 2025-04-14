@@ -1,5 +1,6 @@
 import streamlit as st
 from database import init_db, add_user, get_user, update_user
+from profile_generator import generate_pdf, generate_qr_code
 
 # Initialize DB
 init_db()
@@ -51,3 +52,14 @@ if st.button("💾 Submit"):
             else:
                 st.warning(f"⚠️ {msg}")
 
+        # Generate PDF + QR Code
+        profile_data = (name, email, phone, city, country, job_title, industry, experience_years, expertise, help_areas, linkedin)
+        pdf_path = generate_pdf(profile_data)
+        qr_path = generate_qr_code(email, phone, linkedin)
+
+        st.subheader("📎 Download Your Profile")
+        with open(pdf_path, "rb") as f:
+            st.download_button("📄 Download Profile PDF", f, file_name="profile.pdf")
+
+        with open(qr_path, "rb") as f:
+            st.download_button("🔗 Download QR Code", f, file_name="contact_qr.png")
