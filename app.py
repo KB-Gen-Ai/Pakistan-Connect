@@ -9,13 +9,13 @@ from qr_generator import generate_qr_code
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
 # Background with dim overlay
-flag_url = "https://raw.githubusercontent.com/YOUR_USERNAME/pakistan-connect/main/pakistan-flag.png"
+flag_url = "https://raw.githubusercontent.com/KB-Gen-Ai/pakistan-connect/main/pakistan-flag.png"
 
 st.markdown(
     f"""
     <style>
     .stApp {{
-        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("{flag_url}");
+        background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{flag_url}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
