@@ -6,6 +6,24 @@ from database import save_profile, get_profile_by_id
 from pdf_generator import generate_pdf
 from qr_generator import generate_qr_code
 
+flag_url = "https://raw.githubusercontent.com/KB-Gen-Ai/pakistan-connect/main/pakistan-flag.png"
+
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("{flag_url}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
 # Background with dim overlay
