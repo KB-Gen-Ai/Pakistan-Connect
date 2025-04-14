@@ -1,46 +1,26 @@
 import streamlit as st
 import pandas as pd
 import uuid
+
 from database import save_profile, get_profile_by_id
 from pdf_generator import generate_pdf
 from qr_generator import generate_qr_code
 
-# ✅ MUST be first Streamlit command!
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
-# Background with dim overlay
-flag_url = "https://raw.githubusercontent.com/KB-Gen-Ai/pakistan-connect/main/pakistan-flag.png"
+# 🌍 Display banner
+st.markdown("<h1 style='text-align: center;'>🌍 Pakistan Connect</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Connecting Pakistanis across the globe for collaboration and national brand-building.</p>", unsafe_allow_html=True)
+st.markdown("---")
 
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{flag_url}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        color: white;
-    }}
-    .stTextInput > div > input,
-    .stTextArea > div > textarea,
-    .stSelectbox > div > div {{
-        background-color: #ffffffdd;
-        color: black;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# --- Check if user opened a shared profile link ---
+# --- Handle shared profile link ---
 query_params = st.query_params
 if "profile_id" in query_params:
     profile_id = query_params["profile_id"][0]
     profile_data = get_profile_by_id(profile_id)
 
     if profile_data:
-        st.title("📄 Public Profile View")
-        st.markdown("This is a read-only profile shared by a member.")
+        st.subheader("📄 Public Profile View (Read-Only)")
 
         st.write(f"**Name:** {profile_data['full_name']}")
         st.write(f"**Email:** {profile_data['email']}")
@@ -63,18 +43,18 @@ if "profile_id" in query_params:
         st.error("❌ Profile not found.")
         st.stop()
 
-# --- Main Profile Submission Form ---
-st.title("🇵🇰 Pakistan Connect Member Registration")
+# --- Main profile form ---
+st.subheader("📝 Register Your Profile")
 
 with st.form("profile_form"):
-    full_name = st.text_input("Full Name")
-    email = st.text_input("Email")
-    phone = st.text_input("Phone Number")
-    profession = st.text_input("Profession / Job Title")
-    expertise = st.text_area("Areas of Expertise")
-    how_to_help = st.text_area("How Can You Help Other Members?")
+    full_name = st.text_input("👤 Full Name")
+    email = st.text_input("📧 Email")
+    phone = st.text_input("📱 Phone Number")
+    profession = st.text_input("💼 Profession / Job Title")
+    expertise = st.text_area("📚 Areas of Expertise")
+    how_to_help = st.text_area("🤝 How Can You Help Other Members?")
 
-    submitted = st.form_submit_button("Submit Profile")
+    submitted = st.form_submit_button("✅ Submit My Profile")
 
 if submitted:
     profile_id = str(uuid.uuid4())
@@ -91,14 +71,13 @@ if submitted:
 
     save_profile(profile_data)
 
-    # Generate profile link + QR
     profile_url = f"https://pakistan-connect.streamlit.app/?profile_id={profile_id}"
     qr_image = generate_qr_code(profile_url)
 
     st.success("🎉 Your profile has been saved!")
 
-    st.markdown(f"🔗 **Share your profile:** [Click here]({profile_url})")
-    st.image(qr_image, caption="Scan to View Your Profile", use_column_width=False)
+    st.markdown(f"🔗 **Share your profile:** [Click here to view]({profile_url})")
+    st.image(qr_image, caption="📱 Scan to view your profile", use_column_width=False)
 
     st.download_button(
         label="📄 Download Profile as PDF",
