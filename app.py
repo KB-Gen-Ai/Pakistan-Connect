@@ -8,6 +8,32 @@ from qr_generator import generate_qr_code
 
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
+# Background with dim overlay
+flag_url = "https://raw.githubusercontent.com/KB-Gen-Ai/pakistan-connect/main/pakistan-flag.png"
+
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url("{flag_url}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
+    }}
+    .stTextInput > div > input,
+    .stTextArea > div > textarea,
+    .stSelectbox > div > div {{
+        background-color: #ffffffdd;
+        color: black;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 # --- Check if user opened a shared profile link ---
 query_params = st.query_params
 if "profile_id" in query_params:
