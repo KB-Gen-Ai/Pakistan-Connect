@@ -1,11 +1,11 @@
 import sqlite3
 
-DB_NAME = "pakistan_connect.db"
+DB_FILE = "pakistan_connect.db"
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -15,50 +15,35 @@ def init_db():
             country TEXT,
             job_title TEXT,
             industry TEXT,
-            experience_years INTEGER,
+            experience INTEGER,
             expertise TEXT,
             help_areas TEXT,
             linkedin TEXT,
             UNIQUE(email, phone)
         )
-    """)
+    ''')
     conn.commit()
     conn.close()
 
-def add_user(data):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    try:
-        c.execute("""
-            INSERT INTO users (name, email, phone, city, country, job_title, industry, experience_years, expertise, help_areas, linkedin)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, data)
-        conn.commit()
-        return True, "User added successfully."
-    except sqlite3.IntegrityError:
-        return False, "User with this email and phone already exists."
-    finally:
-        conn.close()
-
-def update_user(data, email, phone):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
-        UPDATE users SET
-            name = ?, city = ?, country = ?, job_title = ?, industry = ?,
-            experience_years = ?, expertise = ?, help_areas = ?, linkedin = ?
-        WHERE email = ? AND phone = ?
-    """, data + (email, phone))
+def save_user(name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR REPLACE INTO users
+        (id, name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin)
+        VALUES (
+            (SELECT id FROM users WHERE email=? AND phone=?),
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ''', (email, phone, name, email, phone, city, country, job_title, industry, experience, expertise, help_areas, linkedin))
     conn.commit()
     conn.close()
 
-def get_user(email, phone):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
-        SELECT * FROM users WHERE email = ? AND phone = ?
-    """, (email, phone))
-    user = c.fetchone()
+def get_user_by_keys(email, phone):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE email=? AND phone=?', (email, phone))
+    user = cursor.fetchone()
     conn.close()
     return user
 
