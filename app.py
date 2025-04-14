@@ -4,6 +4,36 @@ from profile_generator import generate_pdf, generate_qr_code
 
 # Initialize DB
 init_db()
+from urllib.parse import unquote
+
+query_params = st.experimental_get_query_params()
+if "email" in query_params and "phone" in query_params:
+    # PUBLIC VIEW MODE
+    email_param = unquote(query_params["email"][0])
+    phone_param = unquote(query_params["phone"][0])
+    profile = get_user(email_param, phone_param)
+
+    if profile:
+        st.title("👤 Public Member Profile")
+        st.markdown(f"**Name:** {profile[1]}")
+        st.markdown(f"**City:** {profile[4]}, **Country:** {profile[5]}")
+        st.markdown(f"**Job Title:** {profile[6]}, **Industry:** {profile[7]}")
+        st.markdown(f"**Experience:** {profile[8]} years")
+        st.markdown(f"**Expertise:** {profile[9]}")
+        st.markdown(f"**Can Help With:** {profile[10]}")
+        st.markdown(f"**LinkedIn:** {profile[11]}" if profile[11] else "")
+
+        qr_path = generate_qr_code(profile[2], profile[3], profile[11])
+        st.image(qr_path, caption="Scan to Contact")
+
+        pdf_path = generate_pdf(profile)
+        with open(pdf_path, "rb") as f:
+            st.download_button("📄 Download Profile PDF", f, file_name="profile.pdf")
+
+        st.stop()
+    else:
+        st.warning("❌ Profile not found.")
+        st.stop()
 
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
