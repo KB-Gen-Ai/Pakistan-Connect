@@ -62,3 +62,19 @@ def get_user(email, phone):
     conn.close()
     return user
 
+def search_users(query):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    pattern = f"%{query.lower()}%"
+    cursor.execute('''
+        SELECT * FROM users
+        WHERE LOWER(name) LIKE ?
+        OR LOWER(city) LIKE ?
+        OR LOWER(job_title) LIKE ?
+        OR LOWER(expertise) LIKE ?
+        OR LOWER(help_areas) LIKE ?
+    ''', (pattern, pattern, pattern, pattern, pattern))
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
