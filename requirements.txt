@@ -1,6 +1,6 @@
 streamlit
 pandas
+fpdf
 reportlab
 qrcode
 Pillow
-
