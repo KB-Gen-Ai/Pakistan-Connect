@@ -1,49 +1,29 @@
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
-import qrcode
-from PIL import Image
-import os
+from fpdf import FPDF
+import io
 
-def generate_pdf(data, file_path="profile.pdf"):
-    """
-    Create a clean PDF summary of the user profile
-    """
-    c = canvas.Canvas(file_path, pagesize=A4)
-    width, height = A4
+def generate_pdf(record):
+    buffer = io.BytesIO()
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
 
-    y = height - 50
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(50, y, f"Pakistan Connect Member Profile")
-    y -= 30
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, f"{record[1]}'s Profile", ln=True)
 
-    c.setFont("Helvetica", 12)
-    labels = [
-        "Full Name", "Email", "Phone", "City", "Country", "Job Title", "Industry",
-        "Years of Experience", "Areas of Expertise", "Help Offered", "LinkedIn"
-    ]
+    pdf.set_font("Arial", "", 12)
+    pdf.ln(10)
+    pdf.cell(0, 10, f"Name: {record[1]}", ln=True)
+    pdf.cell(0, 10, f"Email: {record[2]}", ln=True)
+    pdf.cell(0, 10, f"Phone: {record[3]}", ln=True)
+    pdf.cell(0, 10, f"Location: {record[4]}, {record[5]}", ln=True)
+    pdf.cell(0, 10, f"Job Title: {record[6]}", ln=True)
+    pdf.cell(0, 10, f"Industry: {record[7]}", ln=True)
+    pdf.cell(0, 10, f"Experience: {record[8]} years", ln=True)
+    pdf.multi_cell(0, 10, f"Expertise: {record[9]}")
+    pdf.multi_cell(0, 10, f"Can Help With: {record[10]}")
+    if record[11]:
+        pdf.cell(0, 10, f"LinkedIn: {record[11]}", ln=True)
 
-    for label, value in zip(labels, data):
-        if value:
-            c.drawString(50, y, f"{label}: {value}")
-            y -= 20
-
-    c.save()
-    return file_path
-
-def generate_qr_code(email, phone, linkedin=None, file_path="qr_code.png"):
-    """
-    Generate a QR code linking to contact info
-    """
-    contact_text = f"Email: {email}\nPhone: {phone}"
-    if linkedin:
-        contact_text += f"\nProfile: {linkedin}"
-
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(contact_text)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-    img.save(file_path)
-    return file_path
-
+    pdf.output(buffer)
+    buffer.seek(0)
+    return buffer
