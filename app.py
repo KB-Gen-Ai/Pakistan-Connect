@@ -9,7 +9,7 @@ from qr_generator import generate_qr_code
 st.set_page_config(page_title="Pakistan Connect", layout="centered")
 
 # --- Check if user opened a shared profile link ---
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 if "profile_id" in query_params:
     profile_id = query_params["profile_id"][0]
     profile_data = get_profile_by_id(profile_id)
